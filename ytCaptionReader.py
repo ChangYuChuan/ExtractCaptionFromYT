@@ -22,22 +22,29 @@ def extract_vocabularies_from_yt(user_id, video_id):
     # declare default dictionary.
     list_result = []
     dict_result = defaultdict(list)
+    dict_sentence_timeStamp = defaultdict(lambda:'')
 
     for data in srt :
-        # return the set called key_words which contains the non-stopwords vocabulariesc
-        key_words = set(data['text'].split(' ')).difference(my_stop_words)
+        sentence = data['text'].replace("\n", " ")
+        # the purpose of turnning into integer is that the timnStamp doesn't requrie the number after point.
+        timeStamp = int(data['start'])
+        if sentence == '' or timeStamp == '':
+            continue
+        # return the set called key_words which contains the non-stopwords vocabularies
+        key_words = set(sentence.split(' ')).difference(my_stop_words)
         # filter out the key_words which doesn't consist of characteristics.
         key_words = list(filter(lambda x: re.search("^[a-zA-Z]+$",x),key_words))
 
-        # remove the number after point.
-        timeStamp = int(data['start'])
+        if len(key_words) == 0:
+            continue
+        
         for word in key_words:
             dict_result[word].append(timeStamp)
-            
+        dict_sentence_timeStamp[str(timeStamp)]  = dict_sentence_timeStamp[str(timeStamp)]+ "{0} ".format(sentence)
     #transform from dictionary to list with word and timeStamp attributes
     for key in dict_result:
         list_result.append({'word':key,'timeStamp':dict_result[key]})
-    return {'vocabularies':list_result, 'video_url': 'https://www.youtube.com/watch?v={0}'.format(video_id)}
+    return {'vocabularies':list_result, 'video_url': 'https://www.youtube.com/watch?v={0}'.format(video_id), 'sentence':dict_sentence_timeStamp}
 
 
 

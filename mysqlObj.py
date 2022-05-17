@@ -22,31 +22,31 @@ class mysqlObj:
         self.__connector.close()
 
     def set_customized_stopwords(self,voc, user_id):
-        try:
-            if user_id is None or user_id == '':
-                raise Exception('Invalid user_id')
-            if(not self.__connector.is_connected()):
-                self.__connector = mysql.connector.connect(**self.__args)
+        if user_id is None or user_id == '':
+            raise Exception('Invalid user_id')
+        if(not self.__connector.is_connected()):
+            self.__connector = mysql.connector.connect(**self.__args)
+        cursor  = self.__connector.cursor()
+        table_name = "{0}_stopwords".format(user_id)
+        # if the table is not exist, create a new one.
+        cursor.execute("CREATE TABLE IF NOT EXISTS {0} (`vocabulary` VARCHAR(50) NOT NULL,PRIMARY KEY (`vocabulary`))".format(table_name))
 
-            cursor  = self.__connector.cursor()   
-            if(not isinstance(voc,list)):
-                voc = [voc]
-            for element in voc:
-                cursor.execute("INSERT INTO stopwordsdb.{0}_stopwords (vocabulary) VALUES (\'{1}\')".format(user_id, element))
-        except Exception as ex:
-            print(ex)
-        finally:
-            self.__connector.commit()
-            cursor.close()
+        if(not isinstance(voc,list)):
+            voc = [voc]
+        for element in voc:
+            cursor.execute("INSERT INTO {0} (vocabulary) VALUES (\'{1}\')".format(table_name, element))
+        self.__connector.commit()
+        cursor.close()
     def get_customized_stopwords(self,user_id):
         
         if user_id is None or user_id == '':
             raise Exception('Invalid user_id')
         if(not self.__connector.is_connected()):
             self.__connector = mysql.connector.connect(**self.__args)
-        
+        table_name = "{0}_stopwords".format(user_id)
+
         cursor = self.__connector.cursor()
-        cursor.execute("SELECT vocabulary FROM stopwordsdb.{0}_stopwords".format(user_id))
+        cursor.execute("SELECT vocabulary FROM {0}".format(table_name))
         retrived_data = list(cursor)
         if(len(retrived_data) == 0):
             return []
@@ -58,7 +58,7 @@ class mysqlObj:
 
 def main():
     db = mysqlObj()
-    db.set_customized_stopwords(['contain','Taiwan'],'jimmychangtw')
+    db.set_customized_stopwords(['contain','Taiwan'],'jimmychang')
     result = db.get_customized_stopwords('jimmychangtw')
     print(result)
     db.close()
